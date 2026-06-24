@@ -1,0 +1,97 @@
+% =====================================================================
+% Introduction
+% =====================================================================
+\section{Introduction}
+\label{sec:introduction}
+
+\IEEEPARstart{M}{odern} robotic systems---from industrial
+manipulators on factory floors to autonomous mobile robots in
+warehouses---share a fundamental computational challenge: given a
+sequence of desired positions (waypoints) produced by a higher-level
+path planner, how should the robot interpolate between those
+positions to produce motion that is physically feasible, smooth, and
+efficient? This question sits at the intersection of numerical
+analysis and robotics engineering, and the choice of interpolation
+method has direct consequences for mechanical wear, energy
+consumption, payload stability, and whether the planned trajectory
+can be executed in real time~\cite{biagiotti2008}.
+
+The simplest answer---connecting consecutive waypoints with
+straight-line segments---creates abrupt velocity changes at every
+waypoint that would require infinite acceleration to follow exactly,
+making the trajectory physically infeasible. More sophisticated
+interpolation methods from Chapters~18, 24, and 28 of Chapra and
+Canale~\cite{chapra2021} address this problem by producing curves
+with guaranteed continuity in velocity, acceleration, or even jerk
+(the time derivative of acceleration). Higher-order continuity
+generally reduces the mechanical disturbance that the robot
+experiences during motion, but every additional constraint must be
+paid for somewhere, and the practical trade-offs are not always
+obvious from the asymptotic analysis alone.
+
+\subsection{Problem statement}
+\label{sec:problem-statement}
+
+A robot is given a sequence of $n+1$ waypoints
+$\{(t_i, \vec{p}_i)\}_{i=0}^{n}$ where $\vec{p}_i \in \mathbb{R}^d$ is
+the desired configuration at time $t_i$. We require an interpolating
+function $\vec{p}(t) : [t_0, t_n] \to \mathbb{R}^d$ such that
+$\vec{p}(t_i) = \vec{p}_i$ (or, in the case of approximation methods,
+$\vec{p}(t_i) \approx \vec{p}_i$). The choice of $\vec{p}(\cdot)$
+should be evaluated against multiple criteria: positional accuracy,
+velocity continuity, acceleration smoothness, jerk minimisation,
+computational cost, and total path length.
+
+The central question this paper addresses is:
+
+\begin{quote}
+\itshape Among the numerical interpolation methods presented in
+Chapters~18 and~24 of Chapra and Canale, which produces the most
+suitable trajectories for robotic applications, and under what
+conditions does each method excel or fail?
+\end{quote}
+
+\subsection{Contributions}
+\label{sec:contributions}
+
+This paper makes the following contributions:
+
+\begin{enumerate}[leftmargin=*]
+\item We provide textbook-formulation Python implementations of four
+interpolation methods---linear (Eq.~18.2 of \cite{chapra2021}),
+natural and clamped cubic splines (Eq.~18.36--18.37), $C^4$ quintic
+Hermite splines, and cubic B-spline approximation via the Cox--de
+Boor recursion---validated against reference implementations and
+analytic test functions.
+\item We construct two robotics datasets (a 12-waypoint mobile-robot
+aisle and an 8-waypoint 2-DOF arm pick-and-place) and seven dataset
+variants that sweep over waypoint density, geometric character, and
+time spacing.
+\item We evaluate each method under each variant against six
+quantitative metrics (peak speed, peak acceleration, RMS jerk, total
+path length, maximum waypoint error, computation time) and a seventh
+that quantifies $C^1$ violations directly.
+\item We validate the analytic derivative formulas against
+finite-difference numerical derivatives drawn from Chapter~28 of
+\cite{chapra2021}, confirming agreement to better than $10^{-3}$ in
+the relevant units.
+\item We identify a non-obvious result: the quintic spline's
+apparently inferior smoothness under natural boundary conditions is
+an artefact of the boundary condition itself, not the method;
+cubic-derived clamped boundary conditions recover and exceed the
+cubic spline's performance.
+\end{enumerate}
+
+\subsection{Paper organisation}
+
+The remainder of the paper is organised as follows.
+Section~\ref{sec:background} reviews the relevant numerical methods
+and the robotics-specific motivation for studying them.
+Section~\ref{sec:methodology} describes the implementation, the
+datasets, and the evaluation metrics. Section~\ref{sec:results}
+presents quantitative results from the baseline scenarios, the full
+variant sweep, the derivative validation, and the boundary-condition
+sensitivity study. Section~\ref{sec:discussion} interprets the
+findings in the context of practical trajectory generation, and
+Section~\ref{sec:conclusion} concludes with limitations and future
+work.

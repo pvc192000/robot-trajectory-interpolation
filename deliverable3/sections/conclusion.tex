@@ -1,0 +1,130 @@
+% =====================================================================
+% Conclusion
+% =====================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+We have presented a comparative analysis of four numerical
+interpolation methods drawn from Chapters~18 and~24 of Chapra and
+Canale---linear interpolation, natural cubic splines, $C^4$ quintic
+Hermite splines, and cubic B-spline approximation---applied to the
+problem of robot trajectory generation. Every method was implemented
+directly from the textbook formulation, validated against reference
+implementations and analytic test functions, and exercised on two
+realistic robotics scenarios sweeping over waypoint density,
+geometric character, and time spacing.
+
+The data support eight findings (Section~\ref{sec:discussion}), of
+which three are non-obvious and worth re-emphasising. \emph{First},
+adding waypoints under chord-length parameterisation \emph{worsens}
+smoothness metrics for spline methods, despite the popular intuition
+that more data is always better. \emph{Second}, the quintic spline
+under natural boundary conditions produces \emph{higher} peak
+acceleration and RMS jerk than the cubic on both datasets---an
+artefact entirely attributable to the boundary condition rather
+than the method, since cubic-derived clamped boundary conditions
+reduce peak acceleration by 33\% and RMS jerk by 64\%.
+\emph{Third}, the cubic B-spline absorbs sharp input geometry much
+more gracefully than the interpolating splines, at the cost of a
+guaranteed 0.28--0.92\,m waypoint deviation in our scenarios.
+
+\subsection{Recommendations}
+\label{sec:recommendations}
+
+Based on the analysis, we recommend the following decision rule for
+practitioners choosing among these methods:
+
+\begin{itemize}[leftmargin=*]
+\item If waypoints are strict constraints and the application has
+known end-velocities and end-accelerations (e.g.\ stitching together
+pre-planned segments), use a \textbf{clamped quintic spline}; this
+configuration combines exact waypoint adherence with $C^4$
+continuity and the smoothest derivative norms in our experiments.
+\item If waypoints are strict constraints but the system is expected
+to start and stop at rest with no other prior information, use a
+\textbf{natural cubic spline}; the natural-BC quintic should be
+avoided because of the endpoint jerk spike documented in
+Section~\ref{sec:results-bc-sens}.
+\item If waypoints are soft guidelines and the path contains
+intentionally sharp geometric features (e.g.\ obstacle-avoidance
+clearances), a \textbf{cubic B-spline approximation} is preferred for
+its substantially smoother derivative profile.
+\item Linear interpolation is appropriate only as a baseline or for
+debugging; it should not be deployed without an additional
+post-processing smoothing step because of the velocity discontinuity
+at every waypoint.
+\end{itemize}
+
+\subsection{Limitations}
+\label{sec:limitations}
+
+The study has several limitations that constrain the generality of
+the conclusions.
+
+The datasets are synthetic. Real industrial waypoint sequences come
+from path planners with their own geometric biases, and the
+distribution of inputs in deployed systems may differ from our
+constructed mixed/sharp/gradual variants. Replicating the analysis
+on a corpus of real recorded trajectories would strengthen the
+external validity of the findings.
+
+The metrics are kinematic only. We do not include actuator-saturation
+limits, mechanical resonance frequencies, payload disturbance
+models, or thermal limits, all of which are relevant to trajectory
+quality in deployed systems and could be incorporated into a
+weighted composite metric.
+
+Only two boundary-condition variants of the quintic spline are
+explored. A more thorough sensitivity study would sweep over a
+range of clamped end-velocities and end-accelerations, or
+investigate alternative boundary specifications such as periodic or
+not-a-knot conditions.
+
+\subsection{Future work}
+\label{sec:future-work}
+
+Several extensions of this work are natural follow-ups for
+Deliverable~4 or beyond:
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Optimised B-splines.} The B-spline approximation has
+free parameters in the choice of knot vector and the placement of
+control points; a constrained optimisation that minimises waypoint
+deviation while preserving smoothness would close the
+waypoint-fidelity gap.
+\item \textbf{Time-optimal reparameterisation.} The current study
+fixes the time parameterisation a priori. Methods such as
+time-scaling under acceleration or jerk constraints
+\cite{macfarlane2003jerk} would let each method run at its physical
+limit, providing a fairer comparison across methods.
+\item \textbf{High-dimensional configuration spaces.} The 2-DOF arm
+is the simplest non-trivial manipulator. Repeating the analysis on
+a 6-DOF or 7-DOF arm would test whether the findings generalise.
+\item \textbf{Comparison with geometrically-aware methods.} Methods
+such as PH curves and minimum-jerk trajectories
+\cite{kyriakopoulos1988minimum} provide alternatives that the
+classical interpolation methods compared here do not, and a head-to-
+head comparison would situate our results within the broader
+trajectory-planning literature.
+\end{enumerate}
+
+\subsection{Reproducibility}
+
+All code, datasets, and results are available in the project
+repository, including:
+
+\begin{itemize}[leftmargin=*]
+\item Python implementations of all four interpolation methods,
+the centered finite-difference schemes from Chapter~28, and the
+metric and visualisation utilities;
+\item the canonical CSV waypoint datasets and the parametric variant
+generators used to construct the experimental sweep;
+\item an executable Jupyter notebook that regenerates every figure
+and table in this paper from the raw data;
+\item the complete experiment metric table
+(\texttt{full\_experiment.csv}, 28 rows $\times$ 14 columns).
+\end{itemize}
+
+The full experiment runs in approximately 30\,ms on commodity
+hardware, supporting independent re-derivation of every reported
+result.

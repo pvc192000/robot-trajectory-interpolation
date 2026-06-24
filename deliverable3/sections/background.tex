@@ -1,0 +1,183 @@
+% =====================================================================
+% Background
+% =====================================================================
+\section{Background}
+\label{sec:background}
+
+\subsection{Continuity classes and their physical meaning}
+\label{sec:continuity}
+
+A trajectory $\vec{p}(t)$ is said to belong to continuity class $C^k$
+on its domain if $\vec{p}$ together with all derivatives up to order
+$k$ exist and are continuous. The lowest non-trivial class, $C^0$,
+requires only that position be continuous; the higher classes $C^1$,
+$C^2$, $C^3$, $C^4$ progressively add velocity, acceleration, jerk,
+and snap. Each class corresponds to a directly-observable physical
+property:
+
+\begin{itemize}[leftmargin=*]
+\item A trajectory that fails $C^1$ has a velocity jump somewhere
+along its domain. To track such a trajectory exactly, an actuator
+would need to apply infinite force for an instant, which is not
+physically realisable.
+\item A trajectory that fails $C^2$ has discontinuous acceleration,
+which a real actuator can approximate but only by demanding step
+changes in motor torque. This induces measurable vibration in the
+mechanical structure~\cite{macfarlane2003jerk}.
+\item A trajectory that fails $C^3$ has discontinuous jerk. Because
+inertial loads with compliant mounts respond at finite bandwidth,
+discontinuous jerk excites mechanical resonances and makes payloads
+slosh or shift~\cite{kyriakopoulos1988minimum}.
+\end{itemize}
+
+The four interpolation methods in this study span the relevant
+continuity classes (\cref{tab:continuity-classes}).
+
+\begin{table}[!t]
+\centering
+\caption{Continuity properties of the four interpolation methods
+studied. Linear interpolation is $C^0$; cubic and quintic splines
+are $C^2$ and $C^4$ respectively; the cubic B-spline is $C^2$
+across the entire curve.}
+\label{tab:continuity-classes}
+\begin{tabularx}{\linewidth}{lcX}
+\toprule
+\textbf{Method} & \textbf{Continuity} & \textbf{Waypoint behaviour} \\
+\midrule
+Linear (Eq.~18.2 of \cite{chapra2021})         & $C^0$ & Passes through every waypoint \\
+Cubic spline (Eq.~18.36)                       & $C^2$ & Passes through every waypoint \\
+Quintic spline (Hermite construction)          & $C^4$ & Passes through every waypoint \\
+Cubic B-spline (Cox--de Boor) \cite{piegl1997nurbs} & $C^2$ & Passes through endpoints only (clamped knot vector); approximates interior \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Linear interpolation}
+\label{sec:bg-linear}
+
+Linear interpolation between two consecutive waypoints
+$(t_i, \vec{p}_i)$ and $(t_{i+1}, \vec{p}_{i+1})$ is given
+by~\cite[Eq.~18.2]{chapra2021}
+\begin{equation}
+\vec{p}(t) = \vec{p}_i + \frac{\vec{p}_{i+1} - \vec{p}_i}{t_{i+1} - t_i}
+             (t - t_i), \quad t \in [t_i, t_{i+1}].
+\label{eq:linear}
+\end{equation}
+The resulting curve is $C^0$ but not $C^1$: the derivative $\dot{\vec{p}}(t)$
+is piecewise constant with a step change at each interior knot.
+Higher derivatives are zero everywhere on the open intervals; in the
+distributional sense, $\ddot{\vec{p}}(t)$ contains Dirac impulses at
+every waypoint.
+
+\subsection{Cubic spline interpolation}
+\label{sec:bg-cubic}
+
+A cubic spline is a piecewise cubic polynomial interpolant that is
+$C^2$ across the entire knot sequence. Following \cite[Section
+18.6]{chapra2021}, we let $M_i = \ddot{\vec{p}}(t_i)$ and write each
+segment in the closed form
+\begin{align}
+\vec{p}_i(t) &= \frac{M_i}{6 h_i}(t_{i+1} - t)^3
+              + \frac{M_{i+1}}{6 h_i}(t - t_i)^3 \nonumber\\
+            &+ \left(\frac{\vec{p}_i}{h_i} - \frac{M_i h_i}{6}\right)(t_{i+1} - t)
+              \nonumber\\
+            &+ \left(\frac{\vec{p}_{i+1}}{h_i} - \frac{M_{i+1} h_i}{6}\right)(t - t_i),
+\label{eq:cubic-segment}
+\end{align}
+where $h_i = t_{i+1} - t_i$. Imposing $C^1$ continuity at every
+interior knot produces the tridiagonal system
+\cite[Eq.~18.37]{chapra2021}
+\begin{equation}
+h_{i-1} M_{i-1} + 2(h_{i-1} + h_i) M_i + h_i M_{i+1} = R_i,
+\label{eq:cubic-system}
+\end{equation}
+with right-hand side
+$R_i = 6/h_i (\vec{p}_{i+1} - \vec{p}_i)
+     - 6/h_{i-1} (\vec{p}_i - \vec{p}_{i-1})$
+for $i = 1, \dots, n-1$. Two boundary equations close the system; we
+use the natural boundary $M_0 = M_n = \vec{0}$ throughout this paper
+unless otherwise stated.
+
+\subsection{Quintic spline interpolation}
+\label{sec:bg-quintic}
+
+A quintic spline extends the cubic construction to fifth-degree
+polynomials with $C^4$ continuity across knots. We parameterise each
+segment using the unit-interval variable $s = (t - t_i)/h_i$ and
+write
+\begin{align}
+\vec{p}_i(s) &= H_0(s) \vec{p}_i + H_1(s) h_i \vec{v}_i + H_2(s) h_i^2 \vec{a}_i \nonumber\\
+           &\quad + H_3(s) \vec{p}_{i+1} + H_4(s) h_i \vec{v}_{i+1}
+                 + H_5(s) h_i^2 \vec{a}_{i+1},
+\label{eq:quintic-hermite}
+\end{align}
+where $H_0,\dots,H_5$ are the standard quintic Hermite basis functions
+and the unknowns are the velocity $\vec{v}_i$ and acceleration
+$\vec{a}_i$ at each knot. Position, velocity, and acceleration are
+continuous by construction; continuity of the third and fourth time
+derivatives at internal knots provides $2(n-1)$ linear equations in
+the $2(n+1)$ unknowns, which we close with four boundary equations.
+The natural boundary condition sets
+$\vec{v}_0 = \vec{a}_0 = \vec{v}_n = \vec{a}_n = \vec{0}$
+(start and stop at rest in both velocity and acceleration); the
+clamped variant lets the user specify these four quantities directly.
+
+\subsection{Cubic B-spline approximation}
+\label{sec:bg-bspline}
+
+A B-spline curve of degree $p$ with knot vector $T = (t_0, \dots, t_m)$
+and control points $\vec{P}_0, \dots, \vec{P}_{m-p-1}$ is defined by
+\begin{equation}
+\vec{C}(t) = \sum_{i=0}^{m-p-1} N_{i,p}(t) \vec{P}_i,
+\label{eq:bspline-curve}
+\end{equation}
+where the basis functions $N_{i,p}$ are computed by the Cox--de Boor
+recursion~\cite{piegl1997nurbs, deboor1978}:
+\begin{align}
+N_{i,0}(t) &= \begin{cases} 1 & t_i \le t < t_{i+1}, \\ 0 & \text{otherwise}, \end{cases}\\
+N_{i,p}(t) &= \frac{t - t_i}{t_{i+p} - t_i} N_{i,p-1}(t)
+            + \frac{t_{i+p+1} - t}{t_{i+p+1} - t_{i+1}} N_{i+1,p-1}(t).
+\label{eq:cox-de-boor}
+\end{align}
+We use a cubic B-spline ($p=3$) with a clamped, ``averaged'' knot
+vector. The first and last knots are repeated $p+1$ times so that the
+curve passes through the first and last waypoint exactly; interior
+knots are placed at the average of $p$ consecutive parameter values.
+The waypoints serve as control points; the curve approximates the
+interior rather than interpolating it, providing the local-control
+property and inherent smoothness that distinguish B-splines from
+classical splines~\cite{piegl1997nurbs}.
+
+\subsection{Numerical differentiation}
+\label{sec:bg-diff}
+
+Following Chapter~28 of \cite{chapra2021}, we use centered
+finite-difference formulas to compute velocity, acceleration, and
+jerk profiles from sampled trajectories. The five-point centered
+formula for the first derivative,
+\begin{equation}
+f'(x_i) \approx \frac{-f_{i+2} + 8 f_{i+1} - 8 f_{i-1} + f_{i-2}}{12 h},
+\label{eq:five-point}
+\end{equation}
+is $\mathcal{O}(h^4)$ accurate; the three-point centered formula for
+the second derivative,
+\begin{equation}
+f''(x_i) \approx \frac{f_{i+1} - 2 f_i + f_{i-1}}{h^2},
+\label{eq:three-point-second}
+\end{equation}
+is $\mathcal{O}(h^2)$. These formulas are used in
+Section~\ref{sec:results} to validate that our analytic derivative
+implementations agree with the textbook finite differences.
+
+\subsection{Robotics context}
+
+Trajectory planning for robots is the process of converting a
+geometric path (a sequence of poses or waypoints) into a
+time-parameterised motion plan that the controller can
+execute~\cite{biagiotti2008, siciliano2009}. Mobile robots and robot
+manipulators differ in the natural choice of configuration space:
+mobile-robot waypoints are typically Cartesian $(x, y)$ poses,
+whereas manipulator waypoints are joint-angle vectors related to
+end-effector poses through nonlinear forward
+kinematics~\cite{craig2018}. The two scenarios in this paper
+exercise both modes.

@@ -1,0 +1,36 @@
+% =====================================================================
+% Abstract (IEEEtran format)
+% =====================================================================
+\begin{abstract}
+Robot motion planning routinely produces sequences of waypoints that
+must be expanded into smooth time-parameterised trajectories before a
+controller can execute them. This paper compares four numerical
+interpolation methods drawn from Chapters~18 and~24 of Chapra and
+Canale---linear interpolation, natural cubic splines, $C^4$ quintic
+splines, and cubic B-spline approximation---under conditions
+representative of two industrial robotics scenarios: a two-dimensional
+mobile robot navigating an aisle and a two-degree-of-freedom planar
+arm performing pick-and-place. Each method is implemented from the
+textbook formulation rather than through library black-boxes,
+validated against centered finite-difference derivatives
+(Chapter~28), and evaluated on seven dataset variants that sweep over
+waypoint density (5, 12, 20), geometric character (sharp 90$^{\circ}$
+corners versus smooth sinusoid), and time-spacing (chord-length
+versus uniform). The results challenge two pieces of conventional
+wisdom: increasing waypoint density \emph{worsens} smoothness metrics
+under chord-length parameterisation, and the natural-boundary quintic
+spline produces \emph{higher} peak acceleration and root-mean-square
+jerk than the cubic spline---an artefact entirely attributable to
+the boundary condition rather than to the method, since cubic-derived
+clamped boundary conditions reduce peak acceleration by 33\% and RMS
+jerk by 64\%. The B-spline approximation produces the smoothest
+derivatives at the cost of guaranteed waypoint deviation. We provide
+a reusable Python implementation, an executable Jupyter notebook,
+and a public dataset to support reproducibility.
+\end{abstract}
+
+\begin{IEEEkeywords}
+B-splines, boundary conditions, cubic splines, finite differences,
+interpolation, jerk minimisation, numerical methods, quintic splines,
+robotics, trajectory planning, waypoint navigation.
+\end{IEEEkeywords}

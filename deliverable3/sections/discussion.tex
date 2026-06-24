@@ -1,0 +1,168 @@
+% =====================================================================
+% Discussion
+% =====================================================================
+\section{Discussion}
+\label{sec:discussion}
+
+We organise the discussion around eight findings supported by the
+data in Section~\ref{sec:results}.
+
+\subsection{Waypoint adherence is a hard distinction, not a continuum}
+\label{sec:disc-waypoint}
+
+Linear, cubic, and quintic splines hit every waypoint to
+floating-point precision on every variant in the experimental sweep,
+while the B-spline approximation deviates by 0.28--0.92\,m on the
+mobile-robot variants and 0.40\,rad on the robot arm. Increasing
+waypoint density does not eliminate this deviation, because the
+B-spline's clamped knot vector forces interpolation only at the
+endpoints; the interior of the curve is fundamentally an
+\emph{approximation} of the input control polygon. This is the
+defining trade-off of the formulation, not a tuning parameter.
+
+For applications in which the waypoints are strict constraints
+(picking a part at an exact location), a B-spline approximation is
+inappropriate regardless of how smooth its derivatives may be. For
+applications in which the waypoints are soft guidelines (smoothing a
+collision-avoidance buffer), the trade-off may be acceptable or even
+desirable.
+
+\subsection{Linear interpolation is the only method with $C^1$
+violations}
+\label{sec:disc-linear-c1}
+
+The \texttt{max\_velocity\_disc} column quantifies $C^1$ violation
+directly: linear interpolation produces $\sim 1$\,m/s velocity
+discontinuities at every waypoint regardless of geometry, while the
+smooth methods sit at or below $10^{-4}$\,m/s---essentially
+numerical noise. The standard ``zero acceleration / zero jerk'' rows
+of the linear results in \cref{tab:baseline-metrics} are therefore
+misleading: they characterise the analytic derivative on the open
+intervals between waypoints, not the distributional sense in which
+the second derivative contains Dirac impulses.
+
+A controller that finite-differences the commanded position, as is
+standard in cascade-controlled servomechanisms, would observe
+acceleration spikes proportional to its sampling rate at every
+waypoint. The mismatch between the analytic and physical
+interpretation of the linear-interpolation metrics motivates
+reporting \texttt{max\_velocity\_disc} alongside the other metrics
+in any future study.
+
+\subsection{Adding waypoints can worsen smoothness}
+\label{sec:disc-density}
+
+The density sweep results
+(Section~\ref{sec:results-density}) show that on the mixed geometry
+under chord-length parameterisation, peak acceleration and RMS jerk
+both increase monotonically with waypoint count for every spline
+method. The mechanism is direct: chord-length parameterisation keeps
+each segment's nominal speed at 1\,m/s, so denser waypoints reduce
+$h_i$ proportionally. Because spline curvature scales like
+$1/h_i^2$ and jerk like $1/h_i^3$, denser inputs force larger time
+derivatives.
+
+This finding contradicts the naive intuition that more waypoints
+always means smoother motion. The correct interpretation is that
+denser waypoints buy \emph{geometric fidelity}---the trajectory
+converges towards the polyline as $n$ grows---at the price of
+larger time-derivative magnitudes. Practitioners should choose
+waypoint density based on which property matters more in their
+application, not on the assumption that one trade-off dominates.
+
+\subsection{Geometry dominates the smoothness budget}
+\label{sec:disc-geometry}
+
+Switching from a smooth sinusoid to a sharp 90$^{\circ}$ zigzag at
+fixed $n=12$ approximately doubles peak acceleration and triples RMS
+jerk for cubic and quintic splines---a much larger effect than any
+of the other axes we tested. Geometry is therefore the dominant
+determinant of how aggressively each method has to bend.
+
+The B-spline absorbs this geometric character much more gracefully
+than the interpolating splines: its sharp-vs.-gradual peak
+acceleration ratio is only 1.18, compared to 1.78 for the cubic and
+1.24 for the natural-BC quintic. This is a direct consequence of the
+B-spline's approximation property---it is allowed to soften the
+corner---and explains why B-splines are preferred in trajectory
+planning for paths with intentionally sharp features such as
+obstacle avoidance.
+
+\subsection{Time spacing matters less than expected}
+\label{sec:disc-spacing}
+
+The textbook recommendation to use chord-length parameterisation
+\cite[Section 24.1]{chapra2021} is reasonable but not as critical as
+density or geometry. Switching to uniform spacing on the same
+12-waypoint mixed geometry leaves peak acceleration and RMS jerk
+within $\sim 30\%$ across all methods. The most visible effect is on
+peak speed under linear interpolation, where uniform spacing forces
+the robot to traverse long diagonals in the same time as short
+straight segments.
+
+For practical use, chord-length parameterisation remains the
+default but the penalty of uniform spacing is modest enough that
+implementers facing constraints (such as fixed-rate trajectory
+buffers) need not feel obligated to enforce it.
+
+\subsection{The quintic spline's apparent inferiority is a
+boundary-condition artefact}
+\label{sec:disc-quintic-bc}
+
+The most surprising result in the baseline study is that the quintic
+spline produced higher peak acceleration and RMS jerk than the cubic
+on both datasets despite its higher continuity class
+(\cref{tab:baseline-metrics}). The boundary-condition sensitivity
+study (Section~\ref{sec:results-bc-sens}) explains this anomaly:
+under natural BC the quintic must start and stop at rest in both
+velocity and acceleration, but the rest of the spline is fitted to a
+chord-length parameterisation that implies a 1\,m/s nominal speed;
+reconciling these two demands within the first and last segment
+forces a rapid transition with $\sim 4.5$\,m/s$^3$ jerk spikes at the
+endpoints.
+
+Replacing the natural BC with cubic-derived clamped BC---reading
+$v_0$, $v_n$, $a_0$, $a_n$ off the cubic spline solution and
+applying them as quintic boundary values---reduces peak acceleration
+by 33\% and RMS jerk by 64\%, making the clamped quintic the
+smoothest of the three interpolating methods on this dataset.
+
+The practical implication is twofold. First, published comparisons
+of quintic splines should explicitly state the boundary condition,
+not just the method. Second, for applications where end velocities
+and accelerations are known (a robot moving from one continuous
+trajectory to another), the clamped quintic is the recommended
+choice.
+
+\subsection{Analytic derivatives match numerical differentiation}
+\label{sec:disc-validation}
+
+Centered finite-difference estimates of the dense-sampled trajectory
+agree with the analytic derivatives to better than $10^{-3}$\,m/s$^2$
+for acceleration and $10^{-3}$\,m/s$^3$ for jerk on the cubic,
+quintic, and B-spline interpolants. This validates the textbook
+analytic formulas of Section~\ref{sec:bg-cubic}--\ref{sec:bg-bspline}
+as correct for the intended use.
+
+The single exception---cubic spline jerk, with $5.1 \times 10^{-1}$
+error---is not an implementation bug. The cubic spline's jerk is a
+piecewise constant function with step discontinuities at every
+internal knot. The five-point centered finite-difference scheme
+cannot resolve those steps and instead smooths each into a ramp of
+width $\sim 5h$. The error magnitude reflects the height of the
+worst step in the dataset, not any error in the analytic formula.
+
+\subsection{Computational cost is not a deciding factor}
+\label{sec:disc-compute}
+
+Even the most expensive method (the quintic, which solves a dense
+$2(n+1) \times 2(n+1)$ linear system before evaluating) finishes in
+under one millisecond at every density studied, including dense
+evaluation at 1000 sample points. The full 28-row experiment runs
+end-to-end in approximately 30\,ms.
+
+For the problem sizes typical of robotic trajectory generation
+(tens to low hundreds of waypoints), computation time is not a
+deciding factor. The interesting trade-offs are between waypoint
+adherence, smoothness, and geometric fidelity, not between methods
+of different asymptotic cost.

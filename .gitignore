@@ -1,0 +1,25 @@
+# Python virtualenvs (machine-specific, recreatable from documented pip install)
+.venv/
+**/.venv/
+__pycache__/
+*.pyc
+
+# Large archives (deliverable2.zip exceeds GitHub's 100MB file limit)
+*.zip
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.nav
+*.snm
+*.vrb
+
+# OS cruft
+.DS_Store

@@ -1,0 +1,278 @@
+% =====================================================================
+% Results
+% =====================================================================
+\section{Results}
+\label{sec:results}
+
+\subsection{Baseline scenarios}
+\label{sec:results-baseline}
+
+\Cref{fig:mobile-traj} shows the four interpolated trajectories for
+the 12-waypoint mobile-robot baseline. Linear interpolation is
+identical to the waypoint polygon by construction. The cubic and
+quintic splines pass exactly through every waypoint and round the
+two 90$^{\circ}$ corners with visibly different tightness. The
+B-spline approximation deviates noticeably from the interior
+waypoints, cutting both 90$^{\circ}$ corners and producing a
+shorter overall path.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\linewidth]{mobile_robot_trajectory.png}
+\caption{Mobile-robot trajectory: comparison of the four
+interpolation methods on the 12-waypoint baseline. White circles are
+the waypoints; numbered for reference.}
+\label{fig:mobile-traj}
+\end{figure}
+
+The kinematic profile in \cref{fig:mobile-kinematics} reveals the
+qualitative differences between the methods that are not visible from
+the trajectory plot alone. Linear interpolation has zero analytic
+acceleration and zero analytic jerk because each segment is a
+constant-velocity straight line. Cubic spline jerk exhibits the
+characteristic step pattern of a piecewise-cubic interpolant whose
+third derivative is constant on each segment. Quintic spline jerk is
+continuous but has visibly larger amplitude near $t=0$ and $t=T$,
+where natural boundary conditions force a rapid transition from rest
+to nominal speed. The B-spline produces the smoothest derivative
+profile by every metric.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.78\linewidth]{mobile_robot_kinematics.png}
+\caption{Mobile-robot baseline: speed, acceleration magnitude, and
+jerk magnitude profiles for each method. Note the piecewise-constant
+jerk pattern of the cubic spline and the endpoint jerk spikes of the
+natural-BC quintic spline.}
+\label{fig:mobile-kinematics}
+\end{figure*}
+
+For the robot-arm scenario, \cref{fig:arm-cartesian} shows the
+end-effector trajectories produced by mapping each method's
+joint-space output through forward kinematics. Even though every
+interpolating method visits the same eight joint waypoints, the
+Cartesian paths between them differ because the kinematic mapping is
+nonlinear. The natural-BC quintic produces visible loops near
+waypoints 2 and 5--6 that are not present in the cubic.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\linewidth]{robot_arm_cartesian.png}
+\caption{Robot-arm Cartesian end-effector trajectories: result of
+running each method on the joint-space waypoints and projecting
+through forward kinematics.}
+\label{fig:arm-cartesian}
+\end{figure}
+
+\begin{table*}[t]
+\centering
+\caption{Baseline metrics for all four methods on both scenarios.
+Mobile-robot units are metres; arm units are radians for joint-space
+quantities. \texttt{wp\_err} is the maximum waypoint deviation;
+\texttt{disc} is the maximum velocity discontinuity at internal knots.}
+\label{tab:baseline-metrics}
+\begin{tabular}{llrrrrrrr}
+\toprule
+\textbf{Dataset} & \textbf{Method} & $\max\|v\|$ & $\max\|a\|$ & $\mathrm{rms}\|j\|$ & path & wp\_err & disc & $t$ (ms) \\
+\midrule
+Mobile robot & Linear   & 1.000 & 0.000 & 0.000 & 24.93 & $0$ & $1.41$ & 0.13 \\
+             & Cubic    & 1.215 & 1.175 & 0.340 & 25.51 & $0$ & $9{\times}10^{-5}$ & 0.37 \\
+             & Quintic  & 1.709 & 1.491 & 0.854 & 25.52 & $0$ & $8{\times}10^{-5}$ & 0.75 \\
+             & B-spline & 1.509 & 0.411 & 0.126 & 22.92 & $0.68$ & $3{\times}10^{-5}$ & 0.65 \\
+\midrule
+Robot arm    & Linear   & 1.888 & 0.000 & 0.000 & 6.37 & $0$ & --- & 0.12 \\
+             & Cubic    & 2.580 & 4.225 & 5.191 & 6.66 & $0$ & --- & 0.29 \\
+             & Quintic  & 2.958 & 6.810 & 10.986 & 7.63 & $0$ & --- & 0.67 \\
+             & B-spline & 2.832 & 3.280 & 1.566 & 4.51 & $0.40$ & --- & 0.44 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The quantitative metrics in \cref{tab:baseline-metrics} confirm
+several observations from the figures. The interpolating methods all
+hit every waypoint to floating-point precision; only the B-spline
+deviates (0.68\,m on the mobile robot, 0.40\,rad on the robot arm).
+Linear interpolation reports zero analytic acceleration but a $\sim 1$\,m/s
+velocity-discontinuity magnitude on the mobile robot, in contrast to
+the smooth methods whose discontinuity values sit at $10^{-5}$\,m/s
+and below (the latter is dominated by $\varepsilon$-proportional
+numerical noise from the finite-difference probe). Surprisingly, the
+quintic spline produces \emph{higher} peak acceleration and RMS jerk
+than the cubic on both datasets despite its higher continuity class;
+this anomaly is investigated in Section~\ref{sec:results-bc-sens}.
+
+\subsection{Density sweep}
+\label{sec:results-density}
+
+\Cref{fig:density-sweep} sweeps over waypoint count
+$n \in \{5, 12, 20\}$ on the mixed warehouse-aisle geometry under
+chord-length parameterisation. Counter to a naive expectation that
+``more waypoints means smoother motion'', peak acceleration and RMS
+jerk both increase monotonically with $n$ for every spline-style
+method.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\linewidth]{sweep_density.png}
+\caption{Density sweep: peak acceleration, RMS jerk, and path length
+versus waypoint count on the mixed mobile-robot geometry with
+chord-length spacing. Acceleration and jerk increase monotonically;
+path length converges towards the polyline.}
+\label{fig:density-sweep}
+\end{figure*}
+
+The mechanism is straightforward when viewed alongside the
+trajectories themselves (\cref{fig:density-trajectories}): denser
+waypoints under chord-length spacing reduce the segment width $h_i$
+proportionally, forcing larger curvatures into the splines and
+generating proportionally larger time derivatives. Path length
+converges towards the polyline as $n$ grows, demonstrating that
+geometric fidelity improves while smoothness deteriorates.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\linewidth]{sweep_density_trajectories.png}
+\caption{Mobile-robot trajectories at varying waypoint density. At
+$n=5$ all smooth methods make obvious geometric mistakes; at $n=20$
+they trace the polyline closely.}
+\label{fig:density-trajectories}
+\end{figure*}
+
+\subsection{Geometry sweep}
+\label{sec:results-geometry}
+
+\Cref{fig:geometry-sweep} compares the sharp 90$^{\circ}$ zigzag and
+the smooth sinusoidal scenarios at $n=12$, with both using
+chord-length spacing. The sharp geometry approximately doubles the
+peak acceleration and triples the RMS jerk relative to the gradual
+sinusoid for cubic and quintic splines. The B-spline absorbs the
+geometric character much more gracefully: its sharp-vs.-gradual ratio
+for peak acceleration is only 1.18 (compared to 1.78 for the cubic).
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\linewidth]{sweep_geometry.png}
+\caption{Geometry sweep at $n=12$: sharp 90$^{\circ}$ zigzag versus
+smooth sinusoid. The third panel uses a symmetric-log scale and
+cleanly separates the linear interpolant ($\sim 1$\,m/s real
+velocity discontinuity) from the smooth methods ($\sim 10^{-5}$\,m/s).}
+\label{fig:geometry-sweep}
+\end{figure*}
+
+The trajectory plots in \cref{fig:geometry-trajectories} show why.
+On the sharp zigzag, the cubic and quintic interpolants exhibit
+Runge-style overshoot at every internal corner, attempting to
+reconcile pass-through-every-waypoint with smooth derivatives. The
+B-spline does not overshoot but cuts each corner aggressively, with
+correspondingly small derivative magnitudes. On the smooth sinusoid,
+all three smooth methods agree closely.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\linewidth]{sweep_geometry_trajectories.png}
+\caption{Mobile-robot trajectories on the sharp zigzag (left) and
+gradual sinusoid (right) variants at $n=12$. Cubic and quintic
+splines overshoot at sharp corners; the B-spline cuts them.}
+\label{fig:geometry-trajectories}
+\end{figure*}
+
+\subsection{Spacing sweep}
+\label{sec:results-spacing}
+
+The third axis is the smallest in magnitude
+(\cref{fig:spacing-sweep}). Switching from chord-length to uniform
+time spacing on the same 12-waypoint mixed geometry leaves peak
+acceleration and RMS jerk within roughly 30\% across all methods.
+The most visible effect is on peak speed: the linear interpolant's
+chord-length-parameterised speed envelope is identically 1\,m/s, but
+under uniform spacing it must traverse the long diagonal segments in
+the same one-second budget as the short ones, pushing peak speed to
+1.32\,m/s. The smooth methods inherit some of this effect to a
+lesser degree.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\linewidth]{sweep_spacing.png}
+\caption{Spacing sweep: chord-length versus uniform time spacing at
+$n=12$ on the mixed geometry. Peak speed is the most affected
+metric; peak acceleration and RMS jerk are within 30\%.}
+\label{fig:spacing-sweep}
+\end{figure*}
+
+\subsection{Derivative validation}
+\label{sec:results-validation}
+
+\Cref{fig:validation} compares each method's analytic derivative
+output against centered finite-difference estimates of the same
+underlying dense position trajectory, using the schemes from
+Section~\ref{sec:bg-diff} on the cubic spline run. The two curves
+overlap to plotting precision in the velocity and acceleration
+panels. The jerk panel shows the only meaningful disagreement: the
+cubic spline has true step discontinuities in jerk at every internal
+knot, and the centered five-point finite-difference scheme cannot
+resolve those steps, instead smoothing each into a short ramp.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.78\linewidth]{validation_analytic_vs_empirical.png}
+\caption{Analytic derivative vs.\ centered finite-difference
+empirical derivative for the cubic spline on the baseline mobile
+robot. Velocity and acceleration overlap to plotting precision; the
+jerk panel shows the FD scheme's expected smoothing of the
+analytic step discontinuities at internal knots.}
+\label{fig:validation}
+\end{figure*}
+
+The maximum interior errors are summarised in
+\cref{tab:validation-errors}. The cubic-spline jerk error is
+several orders of magnitude larger than the velocity or acceleration
+errors because the latter are smooth functions of the cubic
+polynomial pieces while the former is genuinely discontinuous. The
+quintic and B-spline jerk errors are at the $10^{-3}$ to $10^{-1}$
+level, consistent with their respective continuity classes.
+
+\begin{table}[!t]
+\centering
+\caption{Maximum interior errors of analytic vs.\ finite-difference
+derivatives, baseline mobile-robot dataset. Boundary stencils are
+excluded from the comparison.}
+\label{tab:validation-errors}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Method} & $\max |v_a - v_e|$ & $\max |a_a - a_e|$ & $\max |j_a - j_e|$ \\
+\midrule
+Cubic    & $2.6 \times 10^{-5}$ & $2.3 \times 10^{-3}$ & $5.1 \times 10^{-1}$ \\
+Quintic  & $7.3 \times 10^{-8}$ & $4.3 \times 10^{-4}$ & $8.8 \times 10^{-4}$ \\
+B-spline & $5.1 \times 10^{-6}$ & $6.6 \times 10^{-4}$ & $1.3 \times 10^{-1}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Quintic boundary-condition sensitivity}
+\label{sec:results-bc-sens}
+
+The boundary-condition sensitivity study
+(Section~\ref{sec:bc-sensitivity-method}) identifies the natural BC
+as the source of the quintic spline's anomalously high derivative
+norms (\cref{fig:quintic-bc}). Replacing the natural BC
+($\vec{v}_0 = \vec{a}_0 = \vec{v}_n = \vec{a}_n = \vec{0}$) with the
+cubic-derived clamped BC reduces peak acceleration from
+1.49\,m/s$^2$ to 1.00\,m/s$^2$ (a 33\% reduction) and RMS jerk from
+0.85\,m/s$^3$ to 0.31\,m/s$^3$ (a 64\% reduction).
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.78\linewidth]{quintic_bc_sensitivity.png}
+\caption{Quintic spline boundary-condition sensitivity, mobile-robot
+baseline. Natural BC forces start/stop-at-rest in both velocity and
+acceleration, generating large endpoint-region jerk. Clamped BC
+with cubic-derived end-velocities and end-accelerations removes the
+endpoint spikes entirely.}
+\label{fig:quintic-bc}
+\end{figure*}
+
+With the cubic-derived clamped BC, the quintic is the smoothest
+interpolating method on the baseline---outperforming the cubic on
+every metric except peak velocity. The natural-BC quintic should
+therefore be reported as a method-plus-BC choice in published
+results, not as an inherent property of quintic splines.

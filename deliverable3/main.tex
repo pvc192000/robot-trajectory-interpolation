@@ -1,0 +1,95 @@
+% =====================================================================
+% Comparative Analysis of Numerical Interpolation Methods
+% for Robot Trajectory Planning
+%
+% Author: Param Chokshi
+% Course: CISC 601 Scientific Computing 2
+% Textbook: Chapra & Canale, Numerical Methods for Engineers (8th ed.)
+%
+% Formatted for the IEEE Transactions / Journals template
+% (IEEEtran.cls, journal mode, two-column).
+% =====================================================================
+\documentclass[journal]{IEEEtran}
+
+% ----- Packages -------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{siunitx}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalize, noabbrev]{cleveref}
+
+% IEEEtran requires hyperref/cleveref to be loaded last and likes
+% bookmarks=true. Already loaded above.
+
+% ----- Figure path ----------------------------------------------------
+\graphicspath{{figures/}}
+
+% ----- Code listing style --------------------------------------------
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    showstringspaces=false,
+}
+
+% ----- Custom commands ------------------------------------------------
+% amsmath provides \eqref already; we keep its default behaviour.
+\renewcommand{\vec}[1]{\mathbf{#1}}
+
+% =====================================================================
+\begin{document}
+% =====================================================================
+
+% ----- Title block (IEEEtran style) -----------------------------------
+\title{Comparative Analysis of Numerical Interpolation Methods\\
+       for Robot Trajectory Planning}
+
+\author{Param~Chokshi%
+\thanks{Manuscript submitted \today.
+This work was prepared as Deliverable~3 of the research project
+for CISC~601 Scientific Computing~2.}%
+\thanks{P. Chokshi is a student in CISC~601 Scientific Computing~2
+(e-mail: pchokshi@my.harrisburgu.edu).}}
+
+% Header and footer information for journal mode.
+\markboth{CISC~601 Scientific Computing~2, Research Project Paper}%
+{Chokshi: Comparative Analysis of Numerical Interpolation Methods}
+
+\maketitle
+
+\input{sections/abstract.tex}
+
+\input{sections/introduction.tex}
+
+\input{sections/background.tex}
+
+\input{sections/methodology.tex}
+
+\input{sections/results.tex}
+
+\input{sections/discussion.tex}
+
+\input{sections/conclusion.tex}
+
+% ----- Bibliography ---------------------------------------------------
+% IEEEtran bibliography style produces the canonical IEEE reference
+% format, matching the .docx template.
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

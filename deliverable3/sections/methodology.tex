@@ -1,0 +1,173 @@
+% =====================================================================
+% Methodology
+% =====================================================================
+\section{Methodology}
+\label{sec:methodology}
+
+\subsection{Implementation overview}
+\label{sec:impl-overview}
+
+All four interpolation methods were implemented in Python~3.12 using
+NumPy~\cite{numpy} and SciPy~\cite{scipy}. As the proposal required,
+each method was coded directly from the textbook formulation rather
+than wrapping a library black-box. SciPy was used only as a numerical
+linear-algebra back-end---specifically \texttt{scipy.linalg.solve\_banded}
+for the cubic-spline tridiagonal system and \texttt{scipy.linalg.solve}
+for the quintic-spline dense system. The B-spline basis was built via
+the Cox--de Boor recursion (Equation~\ref{eq:cox-de-boor}) without
+relying on \texttt{scipy.interpolate.BSpline}. The complete source
+code, datasets, and results are available in the project repository.
+
+The cubic and B-spline implementations were validated against
+SciPy's reference \texttt{CubicSpline} and \texttt{BSpline} classes
+on identical inputs and agreed to machine precision (maximum error
+$\sim 10^{-15}$). The quintic-spline implementation was validated by
+reconstructing a known fifth-degree polynomial; the implementation
+reproduced both the polynomial values and its analytic derivatives
+to floating-point precision ($\sim 10^{-13}$).
+
+\subsection{Datasets}
+\label{sec:datasets}
+
+\subsubsection{Mobile robot scenario.}
+The mobile-robot dataset consists of twelve $(x, y)$ waypoints in
+metres representing a robot navigating a warehouse aisle. The path
+includes a straight entry segment, a sharp 90$^{\circ}$ right turn
+around a shelving unit, a diagonal traverse to a pick station, a
+90$^{\circ}$ left turn back into the main aisle, and a gentle
+S-curve to the exit. Waypoint times use chord-length parameterisation
+at a nominal speed of 1\,m/s, the standard recommendation in
+\cite[Section 24.1]{chapra2021} for non-uniformly spaced data. Total
+trajectory time is 24.93\,s.
+
+\subsubsection{Robot arm scenario.}
+The robot-arm dataset describes a 2-DOF planar manipulator with link
+lengths $L_1 = \SI{0.5}{\meter}$ and $L_2 = \SI{0.4}{\meter}$
+performing a pick-and-place cycle. The cycle visits eight joint-space
+waypoints (in degrees, converted to radians internally): home,
+approach over part, grasp, lift, transfer mid-point, over placement
+bay, place, retract. Forward kinematics maps joint angles to
+Cartesian end-effector position via
+\begin{align}
+x &= L_1 \cos\theta_1 + L_2 \cos(\theta_1 + \theta_2),\\
+y &= L_1 \sin\theta_1 + L_2 \sin(\theta_1 + \theta_2),
+\end{align}
+following Chapter~3 of \cite{craig2018}. All Cartesian waypoints lie
+within the reachable workspace $\|(x,y)\| \le L_1 + L_2 = \SI{0.9}{\meter}$.
+Waypoint timing is uniform at one second per segment for a total of
+seven seconds.
+
+\subsubsection{Variant datasets for the experimental sweep.}
+To investigate how each method's behaviour depends on input
+characteristics, we generated five additional dataset variants by
+sweeping over three independent axes: waypoint density, geometric
+character, and time spacing
+(\cref{tab:variant-summary}). The variant family is designed so that
+each axis varies in isolation: the density sweep holds geometry and
+spacing fixed, the geometry sweep holds density and spacing fixed,
+and the spacing sweep holds geometry and density fixed.
+
+\begin{table}[!t]
+\centering
+\caption{Dataset variants used in the experimental sweep. The
+canonical baseline is \texttt{mixed\_baseline\_chord}; each row
+varies exactly one axis from the baseline.}
+\label{tab:variant-summary}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Variant} & \textbf{Geometry} & \textbf{Spacing} & \textbf{$n$} \\
+\midrule
+mixed\_sparse\_chord       & mixed   & chord   &  5 \\
+mixed\_baseline\_chord     & mixed   & chord   & 12 \\
+mixed\_dense\_chord        & mixed   & chord   & 20 \\
+sharp\_n12\_chord          & sharp   & chord   & 12 \\
+gradual\_n12\_chord        & gradual & chord   & 12 \\
+mixed\_baseline\_uniform   & mixed   & uniform & 12 \\
+robot\_arm\_baseline       & arm     & uniform &  8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The geometry options are: a \emph{mixed} warehouse-aisle path
+(arc-length resampled from the original 12-vertex polyline at the
+desired density); a \emph{sharp} rectangular zigzag with eleven
+segments alternating between horizontal and vertical and exact 90$^{\circ}$
+interior corners; and a \emph{gradual} sinusoidal path
+$y = A \sin(2\pi k x / X)$ chosen so every method should agree
+closely. The spacing options are chord-length parameterisation and
+uniform time spacing.
+
+\subsection{Evaluation metrics}
+\label{sec:metrics}
+
+We evaluate each method-dataset pairing using the metrics summarised
+in \cref{tab:metrics}. Apart from \texttt{compute\_time\_ms} and the
+positional accuracy measure \texttt{max\_waypoint\_err}, all metrics
+are computed from a dense sample of 1000 evenly spaced points
+generated by analytic evaluation of the interpolant.
+
+\begin{table}[!t]
+\centering
+\caption{Quantitative evaluation metrics. Norms are Euclidean.}
+\label{tab:metrics}
+\begin{tabularx}{\linewidth}{lX}
+\toprule
+\textbf{Metric}     & \textbf{Definition} \\
+\midrule
+\texttt{max\_speed}    & $\max_t \| \dot{\vec{p}}(t) \|$ \\
+\texttt{max\_accel}    & $\max_t \| \ddot{\vec{p}}(t) \|$ \\
+\texttt{rms\_jerk}     & $\sqrt{\frac{1}{T} \int_0^T \| \dddot{\vec{p}}(t) \|^2 dt}$
+                          (trapezoidal quadrature) \\
+\texttt{path\_length}  & $\int_0^T \| \dot{\vec{p}}(t) \|\, dt$
+                          (trapezoidal quadrature) \\
+\texttt{max\_waypoint\_err} & $\max_i \|\vec{p}(t_i) - \vec{p}_i\|$ \\
+\texttt{max\_velocity\_disc} & $\max_i \|\dot{\vec{p}}(t_i^+) - \dot{\vec{p}}(t_i^-)\|$
+                                (probe with $\varepsilon = 10^{-6}(t_n - t_0)$) \\
+\texttt{compute\_time\_ms}   & wall-clock time to construct and densely
+                                evaluate the interpolant \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The \texttt{max\_velocity\_disc} metric provides a direct,
+quantitative measure of $C^1$ violation. For a $C^1$ method the
+left- and right-limits of the velocity at any internal knot agree,
+so the probe returns a value proportional to $2\varepsilon \cdot
+\max\|\ddot{\vec{p}}\|$ (essentially numerical noise). For linear
+interpolation the limits differ, and the probe returns the actual
+magnitude of the velocity jump.
+
+\subsection{Validation methodology}
+\label{sec:validation-method}
+
+To verify that the analytic-derivative formulas of each
+interpolation method are correctly implemented, we densely sample
+each method's position output and compute first, second, and third
+derivatives by finite difference using the schemes from
+Section~\ref{sec:bg-diff}. We then compare the analytic and empirical
+derivatives over the interior of the trajectory (excluding the
+boundary regions where finite differences fall back to lower-order
+one-sided stencils). Disagreement that scales with $h^k$ for the
+expected order of accuracy indicates a correctly-implemented analytic
+derivative; disagreement that does not scale with $h$ would indicate
+a bug.
+
+\subsection{Boundary-condition sensitivity study}
+\label{sec:bc-sensitivity-method}
+
+After observing that the natural-boundary quintic spline produced
+unexpectedly large peak acceleration and RMS jerk on the baseline
+mobile-robot dataset (Section~\ref{sec:results}), we conducted an
+ad-hoc sensitivity study comparing two boundary-condition variants
+of the same quintic spline:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Natural BC}: $\vec{v}_0 = \vec{a}_0 = \vec{v}_n = \vec{a}_n = \vec{0}$.
+\item \textbf{Cubic-derived clamped BC}: $\vec{v}_0, \vec{v}_n, \vec{a}_0, \vec{a}_n$
+      are read off the cubic-spline solution at the same knots, then
+      passed to the quintic spline as clamped boundary values.
+\end{itemize}
+
+The sensitivity study quantifies how much of the observed quintic
+behaviour is attributable to the boundary condition rather than the
+method itself.
