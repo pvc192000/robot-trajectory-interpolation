@@ -15,13 +15,13 @@ approximation) applied to robot trajectory-planning scenarios.
 Deliverable 2 is the implementation, data-collection, and
 experimental-sweep phase. The artefacts produced are:
 
-* a working Python package (`deliverable2/src/`) containing
+* a working Python package (`src/`) containing
   textbook-formulation implementations of every method, a numerical
   differentiation module, parameterised dataset generators, evaluation
   metrics, plotting utilities, and an experiment runner;
-* the canonical waypoint datasets in CSV form (`deliverable2/data/`);
-* a one-shot Jupyter notebook (`deliverable2.ipynb`) and an HTML
-  preview (`deliverable2.html`) -- the primary submission artefact;
+* the canonical waypoint datasets in CSV form (`data/`);
+* a one-shot Jupyter notebook (`notebooks/analysis.ipynb`) and an HTML
+  preview (`notebooks/analysis.html`) -- the primary submission artefact;
 * the offline orchestrator scripts `src/main.py` (baseline-only) and
   `src/run_full_experiment.py` (full sweep);
 * the resulting metrics summaries (`results/metrics_summary.csv` for
@@ -372,24 +372,23 @@ formulation.
 
 ## 7. Reproducibility
 
-The pipeline is deterministic. From the `deliverable2/` directory:
+The pipeline is deterministic. From the repository root:
 
 ```bash
 python -m venv .venv
-.venv/bin/pip install numpy scipy matplotlib pandas jupyter ipykernel \
-    nbformat nbclient
-.venv/bin/python -m ipykernel install --user --name nm-research-d2 \
-    --display-name "Python 3 (Numerical Methods D2)"
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python -m ipykernel install --user --name nm-research \
+    --display-name "Python 3 (Robot Trajectory Interpolation)"
 
-# Baseline-only orchestrator (legacy):
+# Baseline-only orchestrator:
 .venv/bin/python -m src.main
 
 # Full experiment with all variants and validation figures:
 .venv/bin/python -m src.run_full_experiment
 
 # Rebuild and re-execute the notebook:
-.venv/bin/python build_notebook.py
-.venv/bin/jupyter nbconvert --to html deliverable2.ipynb
+.venv/bin/python notebooks/build_notebook.py
+.venv/bin/jupyter nbconvert --to html notebooks/analysis.ipynb
 ```
 
 Verified package versions used in this run: `numpy 2.4.6`,

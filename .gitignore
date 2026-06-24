@@ -4,7 +4,7 @@
 __pycache__/
 *.pyc
 
-# Large archives (deliverable2.zip exceeds GitHub's 100MB file limit)
+# Large archives (exceed GitHub's 100MB file limit)
 *.zip
 
 # LaTeX build artifacts
@@ -23,3 +23,6 @@ __pycache__/
 
 # OS cruft
 .DS_Store
+
+# Internal project tracking (not part of the published package)
+project-summary.md

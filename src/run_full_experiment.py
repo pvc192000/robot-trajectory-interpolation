@@ -1,4 +1,4 @@
-"""Run the full Deliverable 2 experiment from the command line.
+"""Run the full experiment from the command line.
 
 This script extends ``src/main.py`` with the variant sweep, the
 analytic-vs-empirical derivative validation, and the quintic boundary-
@@ -13,7 +13,7 @@ condition sensitivity study. It writes:
 * ``results/figures/quintic_bc_*.png`` -- natural vs clamped quintic
   boundary-condition comparison.
 
-Run from the ``deliverable2/`` directory:
+Run from the repository root:
 
     .venv/bin/python -m src.run_full_experiment
 """

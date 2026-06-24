@@ -1,10 +1,10 @@
-"""Main orchestrator for the Deliverable 2 comparative study.
+"""Main orchestrator for the comparative interpolation study.
 
 Running this script as
 
     python -m src.main
 
-(from the ``deliverable2`` directory) executes the full analysis
+(from the repository root) executes the full analysis
 pipeline:
 
 1. Generates and saves the two waypoint datasets to ``data/``.

@@ -1,8 +1,8 @@
 # Class Presentation — Comparative Analysis of Numerical Interpolation Methods for Robot Trajectory Planning
 
 LaTeX Beamer slide deck for the in-class presentation of the research
-project. Compiles to a 25-slide PDF reusing the figures from
-Deliverable 2.
+project. Compiles to a 25-slide PDF reusing the figures from the
+analysis pipeline.
 
 **Author:** Param Chokshi
 **Course:** CISC 601 Scientific Computing 2
@@ -13,7 +13,7 @@ Deliverable 2.
 presentation/
 ├── presentation.tex      # Beamer source (~500 lines)
 ├── README.md             # this file
-└── figures/              # PNGs copied from deliverable2/results/figures
+└── figures/              # PNGs copied from ../../results/figures
 ```
 
 ## Slide outline (25 slides, ~15-20 minute talk)

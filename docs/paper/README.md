@@ -1,21 +1,21 @@
-# Deliverable 3 — Research Paper Draft (IEEE Transactions / Journals format)
+# Research Paper (IEEE Transactions / Journals format)
 
 LaTeX source for the research paper draft of the
 **Comparative Analysis of Numerical Interpolation Methods for Robot
 Trajectory Planning** project. The paper is formatted using the
 **IEEEtran** LaTeX class in journal mode, which produces the same
 two-column layout as the IEEE Transactions / Journals Microsoft Word
-template (`IEEE_journal_template-1-1-1-1.docx`) at the project
-root. The IEEE Transactions template explicitly endorses LaTeX as an
+template (`ieee-template.docx` in this directory). The IEEE Transactions template explicitly endorses LaTeX as an
 alternative to Word, and IEEEtran is the official IEEE class file.
 
 ## Project structure
 
 ```
-deliverable3/
+paper/
 ├── main.tex                  # IEEEtran preamble, title block, \input directives
 ├── references.bib            # bibliography entries
 ├── Makefile                  # pdflatex/bibtex orchestration
+├── ieee-template.docx        # reference IEEE Word template
 ├── sections/
 │   ├── abstract.tex          # \begin{abstract}...\end{abstract} + \begin{IEEEkeywords}
 │   ├── introduction.tex      # \IEEEPARstart drop-cap opening
@@ -24,7 +24,7 @@ deliverable3/
 │   ├── results.tex           # uses figure*/table* for two-column-spanning content
 │   ├── discussion.tex
 │   └── conclusion.tex
-└── figures/                  # PNGs copied from deliverable2/results/figures
+└── figures/                  # PNGs copied from ../../results/figures
 ```
 
 ## IEEE template conformance
@@ -75,7 +75,7 @@ The project compiles unmodified on
 default templates available there:
 
 1. Create a new project, choose "Upload Project", and upload the
-   contents of `deliverable3/` as a zip.
+   contents of `docs/paper/` as a zip.
 2. Set the main document to `main.tex` (Menu → Settings).
 3. Compile.
 
@@ -115,10 +115,10 @@ The paper follows the IEEE Transactions structure:
 
 ## Companion materials
 
-The paper draws on artefacts produced in Deliverable 2. The companion
-notebook (`../deliverable2/deliverable2.ipynb`) regenerates every
+The paper draws on artefacts produced by the analysis pipeline. The companion
+notebook (`../../notebooks/analysis.ipynb`) regenerates every
 figure and table in this paper from the raw data. The full metrics
-table is saved at `../deliverable2/results/full_experiment.csv`.
+table is saved at `../../results/full_experiment.csv`.
 
 ## Author and course information
 

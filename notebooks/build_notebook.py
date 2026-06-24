@@ -1,6 +1,6 @@
-"""Generate the Deliverable 2 Jupyter notebook.
+"""Generate the analysis Jupyter notebook.
 
-Builds ``deliverable2.ipynb`` from a structured list of markdown and
+Builds ``analysis.ipynb`` from a structured list of markdown and
 code cells using ``nbformat``, then executes it so the resulting file
 is fully populated with figures and dataframe outputs ready to ship.
 
@@ -26,7 +26,7 @@ from nbclient import NotebookClient
 
 
 HERE = Path(__file__).resolve().parent
-NOTEBOOK_PATH = HERE / "deliverable2.ipynb"
+NOTEBOOK_PATH = HERE / "analysis.ipynb"
 
 
 def md(source: str) -> dict:
@@ -48,7 +48,7 @@ CELLS = [
 
 This notebook is the executable companion to the Deliverable 2 submission. It loads the synthetic robotics datasets, runs each of the four interpolation methods through the project's Python implementation, sweeps over waypoint density / geometry / time-spacing as called for in the Deliverable 1 methodology, validates the analytic derivatives against numerical differentiation, and surfaces the boundary-condition sensitivity of the quintic spline.
 
-The implementations live in the sibling `src/` package and follow the textbook formulations: Eq 18.2 for linear, Eq 18.36 / Eq 18.37 for cubic, the quintic Hermite system for C⁴ quintic splines, and the Cox–de Boor recursion for B-splines. See `deliverable2_methodology.md` for the full derivations and references.
+The implementations live in the sibling `src/` package and follow the textbook formulations: Eq 18.2 for linear, Eq 18.36 / Eq 18.37 for cubic, the quintic Hermite system for C⁴ quintic splines, and the Cox–de Boor recursion for B-splines. See `docs/methodology.md` for the full derivations and references.
 """
     ),
     md(
